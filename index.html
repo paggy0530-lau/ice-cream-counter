@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>🍦 冰淇淋口味統計</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fff;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#5a4d4d;font-weight:700}
+.wrap{max-width:900px;margin:auto;padding:20px 18px 40px}
+h1{text-align:center;margin:6px 0 2px;font-size:27px;font-weight:900;color:#f1dce3}
+.sub{text-align:center;color:#aaa;font-size:15px;margin-bottom:14px}
+.summary{border:4px solid #f5d7e0;background:#fff8fa;border-radius:28px;text-align:center;padding:17px 10px 19px;margin-bottom:22px}
+.total{font-size:48px;line-height:1;color:#d88aa1;font-weight:900}
+.total span{font-size:25px;color:#6b5e5e;margin-left:5px}
+.total-label{font-size:18px;margin-top:8px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+label{font-size:14px;color:#8a7b7b}
+input{width:100%;margin-top:5px;border:2px solid #eadde0;border-radius:15px;padding:12px 13px;font-size:16px;font-weight:700;color:#5a4d4d;background:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{border:3px solid #eadfe1;border-radius:28px;padding:28px 14px 20px;text-align:center;background:#fff}
+.name{font-size:23px;font-weight:900;min-height:34px;margin-bottom:20px;word-break:break-all}
+.controls{display:grid;grid-template-columns:76px 1fr 76px;align-items:center;gap:10px}
+.num{font-size:38px;font-weight:900;color:#5a4d4d}
+.btn{width:76px;height:76px;border:0;border-radius:50%;font-size:42px;line-height:1;font-weight:900;cursor:pointer}
+.minus{background:#fbe2e8;color:#cf6680}
+.plus{background:#e4f2dc;color:#5d8754}
+.btn:active{transform:scale(.94)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.action{border:0;border-radius:18px;padding:16px;font-size:17px;font-weight:900;cursor:pointer}
+.clear{background:#eee9e9;color:#665b5b}
+.manage{background:#cf708a;color:white}
+.panel{display:none;margin-top:14px;border:2px solid #eadfe1;border-radius:22px;padding:16px;background:#fffafa}
+.panel.open{display:block}
+.row{display:grid;grid-template-columns:1fr 110px 70px;gap:8px;margin:8px 0}
+.row input{margin:0}
+.small{border:0;border-radius:12px;font-weight:900;cursor:pointer}
+.save{background:#e4f2dc;color:#52794c}
+.del{background:#fbe2e8;color:#bd526b}
+.history{margin-top:18px;border:2px solid #eadfe1;border-radius:22px;padding:16px;background:#fff}
+.history h2{margin:0 0 10px;font-size:18px}
+.history-item{font-size:13px;padding:8px 0;border-bottom:1px solid #eee}
+.status{text-align:center;font-size:13px;color:#999;margin-top:10px}
+@media(max-width:650px){.wrap{padding:16px 12px 30px}.grid{gap:10px}.card{padding:24px 8px 17px}.name{font-size:20px}.controls{grid-template-columns:58px 1fr 58px;gap:5px}.btn{width:58px;height:58px;font-size:34px}.num{font-size:32px}.fields{grid-template-columns:1fr}.row{grid-template-columns:1fr 76px 58px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🍦 冰淇淋口味統計</h1>
+<div class="sub">直接按 ＋／− 選擇數量</div>
+
+<div class="summary">
+  <div class="total"><b id="total">0</b><span>顆</span></div>
+  <div class="total-label">目前總數</div>
+</div>
+
+<div class="fields">
+  <div><label>日期</label><input id="date" type="date"></div>
+  <div><label>車牌／備註（選填）</label><input id="note" placeholder="例如：ABC-1234"></div>
+</div>
+
+<div id="grid" class="grid"></div>
+
+<div class="actions">
+  <button class="action clear" id="clear">全部清除</button>
+  <button class="action manage" id="manage">⚙️ 編輯口味</button>
+</div>
+
+<div id="panel" class="panel">
+  <div id="rows"></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <input id="newName" placeholder="新增口味名稱">
+    <button class="action manage" id="add" style="margin:0;padding:10px 15px;white-space:nowrap">＋新增</button>
+  </div>
+</div>
+
+<div class="status" id="status">☁️ 正在連線…</div>
+
+<div class="history">
+<h2>📋 最近紀錄（本機）</h2>
+<div id="history"></div>
+</div>
+</div>
+
+<script>
+const SUPABASE_URL="https://ymwefwrqoizpugirlxy.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_BoeGJy5saY_UDhURyHlEYg_OWKHIP3e";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+const defaultFlavors=["淇淋巧酥","草莓","夏威夷果仁","香草","比利時巧克力","焦糖奶油脆餅","抹茶","草莓起司","仲夏野莓","藍莓"];
+let flavors=[];
+const $=id=>document.getElementById(id);
+
+$("date").value=new Date().toISOString().slice(0,10);
+
+function historyLoad(){return JSON.parse(localStorage.getItem("icecream_history")||"[]")}
+function historySave(item){
+  const h=historyLoad(); h.unshift(item); localStorage.setItem("icecream_history",JSON.stringify(h.slice(0,20))); renderHistory();
+}
+function renderHistory(){
+  const h=historyLoad();
+  $("history").innerHTML=h.length?h.map(x=>`<div class="history-item">${x.date}　${x.note||"—"}　共 ${x.total} 顆</div>`).join(""):"尚無紀錄";
+}
+
+function render(){
+  $("grid").innerHTML=flavors.map(f=>`
+    <div class="card">
+      <div class="name">${esc(f.name)}</div>
+      <div class="controls">
+        <button class="btn minus" onclick="change('${f.id}',-1)">−</button>
+        <div class="num">${f.count}</div>
+        <button class="btn plus" onclick="change('${f.id}',1)">＋</button>
+      </div>
+    </div>`).join("");
+  $("total").textContent=flavors.reduce((s,f)=>s+Number(f.count||0),0);
+}
+function renderRows(){
+  $("rows").innerHTML=flavors.map(f=>`
+    <div class="row">
+      <input id="n_${f.id}" value="${escAttr(f.name)}">
+      <button class="small save" onclick="renameFlavor('${f.id}')">儲存</button>
+      <button class="small del" onclick="deleteFlavor('${f.id}')">刪除</button>
+    </div>`).join("");
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function escAttr(s){return esc(s)}
+
+async function load(){
+  $("status").textContent="☁️ 讀取雲端資料…";
+  const {data,error}=await db.from("ice_cream_flavors").select("id,name,count").order("id");
+  if(error){$("status").textContent="⚠️ 讀取失敗："+error.message;return}
+  flavors=data||[];
+  if(!flavors.length){
+    const seed=defaultFlavors.map(name=>({name,count:0}));
+    const r=await db.from("ice_cream_flavors").insert(seed).select("id,name,count");
+    if(!r.error) flavors=r.data||[];
+  }
+  render();renderRows();
+  $("status").textContent="☁️ 已同步";
+}
+async function change(id,delta){
+  const f=flavors.find(x=>String(x.id)===String(id)); if(!f)return;
+  const next=Math.max(0,Number(f.count||0)+delta);
+  const {data,error}=await db.from("ice_cream_flavors").update({count:next}).eq("id",id).select("id,name,count").single();
+  if(error){$("status").textContent="⚠️ 更新失敗";return}
+  Object.assign(f,data); render();
+  $("status").textContent="☁️ 已同步";
+}
+$("clear").onclick=async()=>{
+  if(!confirm("確定要把所有口味清零嗎？"))return;
+  const {error}=await db.from("ice_cream_flavors").update({count:0}).gt("id",0);
+  if(error){$("status").textContent="⚠️ 清除失敗";return}
+  historySave({date:$("date").value,note:$("note").value,total:flavors.reduce((s,f)=>s+Number(f.count||0),0)});
+  await load();
+};
+$("manage").onclick=()=>{$("panel").classList.toggle("open");renderRows()};
+$("add").onclick=async()=>{
+  const name=$("newName").value.trim(); if(!name)return;
+  const {error}=await db.from("ice_cream_flavors").insert({name,count:0});
+  if(error){alert("新增失敗："+error.message);return}
+  $("newName").value="";await load();
+};
+async function renameFlavor(id){
+  const name=$("n_"+id).value.trim();if(!name)return;
+  const {error}=await db.from("ice_cream_flavors").update({name}).eq("id",id);
+  if(error){alert("修改失敗："+error.message);return}
+  await load();
+}
+async function deleteFlavor(id){
+  if(!confirm("確定刪除這個口味？"))return;
+  const {error}=await db.from("ice_cream_flavors").delete().eq("id",id);
+  if(error){alert("刪除失敗："+error.message);return}
+  await load();
+}
+
+db.channel("icecream-live")
+.on("postgres_changes",{event:"*",schema:"public",table:"ice_cream_flavors"},payload=>{
+  load();
+})
+.subscribe();
+
+renderHistory();load();
+</script>
+</body>
+</html>
