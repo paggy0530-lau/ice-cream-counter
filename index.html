@@ -31,7 +31,7 @@ h1{text-align:center;color:#d95676;font-size:clamp(32px,6vw,52px);line-height:1.
 .summary span{font-size:clamp(18px,3vw,24px);font-weight:800}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .card{background:#fff;border:3px solid #eadede;border-radius:24px;padding:16px 14px}
-.name{text-align:center;font-size:clamp(20px,3.2vw,28px);font-weight:900;min-height:48px;display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}.stockMini{display:inline-flex;align-items:center;justify-content:center;font-size:clamp(12px,2vw,15px);font-weight:800;color:#6f91c8;background:#eef4ff;border-radius:10px;padding:3px 7px;white-space:nowrap}
+.name{text-align:center;font-size:clamp(20px,3.2vw,28px);font-weight:900;min-height:48px;display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}.stockMini{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:clamp(12px,2vw,15px);font-weight:800;color:#6f91c8;background:transparent;padding:2px 0;white-space:nowrap}
 .controls{display:grid;grid-template-columns:58px minmax(58px,1fr) 58px;align-items:center;justify-content:center;gap:10px}
 .btn{width:58px;height:58px;border:0;border-radius:50%;font-size:35px;font-weight:900;line-height:1;touch-action:manipulation}
 .minus{background:#ffe0e7;color:#d95676}
@@ -62,7 +62,7 @@ h1{text-align:center;color:#d95676;font-size:clamp(32px,6vw,52px);line-height:1.
 .row button,.new button{border:0;border-radius:10px;padding:9px 12px;font-weight:800}
 .del{background:#ffe0e7;color:#b94f68}.add{background:#e1f2da;color:#4d7d47}
 @media(max-width:600px){
-  .stockMini{font-size:12px;padding:3px 6px}
+  .stockMini{font-size:12px;padding:2px 0}.stockMini input{width:40px;height:30px}
   .wrap{padding:18px 12px 34px}
   .info{padding:17px 16px 18px;border-radius:25px}
   .dateLine{gap:9px}
@@ -103,13 +103,6 @@ h1{text-align:center;color:#d95676;font-size:clamp(32px,6vw,52px);line-height:1.
 </div>
 </div></div>
 
-<div class="inventory">
-  <div class="inventoryHeader">
-    <h2>⚙️ 庫存管理</h2>
-    <button type="button" class="inventoryClear" id="clearStock">↺ 清除庫存</button>
-  </div>
-  <div id="stockGrid" class="stockGrid"></div>
-</div>
 <div class="summary"><b id="total">0</b><span>顆　目前總數</span></div>
 <div id="grid" class="grid"></div>
 <div class="actions" id="actions"><button class="save" id="save">💾 保存這筆紀錄</button><button class="clear" id="clear">↺ 清除目前數量</button></div>
@@ -187,7 +180,14 @@ function render(){
     const n=document.createElement("div"); n.className="name";
     const nameText=document.createElement("span"); nameText.textContent=f.name;
     const stockMini=document.createElement("span"); stockMini.className="stockMini";
-    stockMini.textContent="庫存 "+stockValue(f.id);
+    const stockLabel=document.createElement("span"); stockLabel.textContent="庫存";
+    const stockInput=document.createElement("input");
+    stockInput.type="number"; stockInput.min="0"; stockInput.step="1";
+    stockInput.inputMode="numeric"; stockInput.value=stockValue(f.id);
+    stockInput.setAttribute("aria-label",f.name+"庫存數量");
+    stockInput.onchange=()=>setStock(f.id,stockInput.value);
+    stockInput.onkeydown=e=>{if(e.key==="Enter")stockInput.blur()};
+    stockMini.append(stockLabel,stockInput);
     n.append(nameText,stockMini);
     const x=document.createElement("div"); x.className="controls";
     const m=document.createElement("button"); m.type="button"; m.className="btn minus"; m.textContent="−"; m.setAttribute("aria-label","減少"+f.name);
@@ -200,7 +200,7 @@ function render(){
     x.append(m,v,a); c.append(n,x); g.append(c);
   });
   $("total").textContent=flavors.reduce((s,f)=>s+(Number(f.count)||0),0);
-  renderStock(); renderRows(); renderHistory();
+  renderRows(); renderHistory();
 }
 
 function renderRows(){
@@ -330,7 +330,6 @@ async function clearAllCounts(showMessage=true){
   if(showMessage) setStatus("☁️ 已清除並同步");
 }
 $("clear").onclick=()=>clearAllCounts(true);
-$("clearStock").onclick=clearStock;
 
 $("manage").onclick=()=>$("editor").classList.toggle("show");
 
