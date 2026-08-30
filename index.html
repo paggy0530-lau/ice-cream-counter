@@ -1,0 +1,373 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>🍦 冰淇淋統計</title><style>
+*{box-sizing:border-box}
+body{margin:0;background:#fff8fa;color:#594848;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","Microsoft JhengHei",sans-serif}
+.wrap{max-width:820px;margin:auto;padding:22px 18px 44px}
+h1{text-align:center;color:#d95676;font-size:clamp(32px,6vw,52px);line-height:1.15;margin:4px 0 2px;font-weight:900}
+.sub{text-align:center;color:#967f7f;font-size:clamp(15px,2.5vw,21px);margin:5px 0 20px}
+.info{background:#fff;border:3px solid #ffd1dc;border-radius:28px;padding:20px 22px 22px;margin-bottom:16px}
+.fields{display:grid;grid-template-columns:1fr;gap:18px}
+.field{font-weight:900;font-size:clamp(18px,3vw,25px);line-height:1.2}
+.field input{display:block;width:100%;margin-top:8px;padding:14px 18px;border:2px solid #dfcccc;border-radius:20px;font-size:clamp(18px,3vw,25px);min-width:0;background:#fff;color:#594848}
+.field input::placeholder{color:#aaa}
+.dateLine{display:flex;align-items:center;gap:12px;margin-top:8px;width:max-content;max-width:100%}
+.dateLine input{width:300px;flex:0 1 300px;margin-top:0}
+.today{flex:0 0 auto;border:0;border-radius:18px;padding:13px 20px;background:#f2e4e7;color:#b94f68;font-weight:900;font-size:clamp(17px,2.8vw,23px);white-space:nowrap}
+.secondaryFields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.inventory{background:#fff;border:3px solid #ffd1dc;border-radius:28px;padding:18px 16px 20px;margin-bottom:20px}
+.inventoryHeader{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.inventoryHeader h2{margin:0;color:#d95676;font-size:clamp(21px,3.2vw,28px)}
+.inventoryClear{border:0;border-radius:13px;padding:9px 12px;background:#eee7e7;color:#655858;font-weight:900;font-size:14px}
+.stockGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.stockCard{background:#fff8fa;border:2px solid #eadede;border-radius:18px;padding:10px 9px}
+.stockName{text-align:center;font-weight:900;font-size:clamp(16px,2.6vw,21px);margin-bottom:7px}
+.stockControls{display:grid;grid-template-columns:42px minmax(46px,1fr) 42px;align-items:center;gap:5px}
+.stockBtn{width:42px;height:42px;border:0;border-radius:50%;font-size:25px;font-weight:900;line-height:1}
+.stockMinus{background:#ffe0e7;color:#d95676}
+.stockPlus{background:#e1f2da;color:#54884b}
+.stockQty{width:58px;min-width:46px;justify-self:center;text-align:center;border:2px solid #dfcccc;border-radius:12px;padding:6px 2px;background:#fff;color:#594848;font-size:22px;font-weight:900}
+.stockQty:focus{outline:none;border-color:#d95676}
+.summary{background:#fff0f4;border:3px solid #ffd1dc;border-radius:28px;text-align:center;padding:18px 12px;margin-bottom:20px}
+.summary b{display:block;color:#d95676;font-size:clamp(44px,7vw,62px);line-height:1;font-weight:900}
+.summary span{font-size:clamp(18px,3vw,24px);font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{background:#fff;border:3px solid #eadede;border-radius:24px;padding:16px 14px}
+.name{text-align:center;font-size:clamp(20px,3.2vw,28px);font-weight:900;min-height:48px;display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}
+.controls{display:grid;grid-template-columns:58px minmax(58px,1fr) 58px;align-items:center;justify-content:center;gap:10px}
+.btn{width:58px;height:58px;border:0;border-radius:50%;font-size:35px;font-weight:900;line-height:1;touch-action:manipulation}
+.minus{background:#ffe0e7;color:#d95676}
+.plus{background:#e1f2da;color:#54884b}
+.qty{width:76px;justify-self:center;min-width:58px;text-align:center;border:3px solid #eadede;border-radius:15px;padding:7px 3px;background:#fff;color:#594848;font-size:clamp(28px,4vw,34px);font-weight:900}
+.qty:focus{outline:none;border-color:#d95676}
+.actions{display:flex;gap:10px;margin-top:17px}
+.actions button,.manage{flex:1;border:0;border-radius:17px;padding:15px 12px;font-size:clamp(16px,2.6vw,21px);font-weight:900}
+.save{background:#ffdce5;color:#c94f6c}
+.clear{background:#eee7e7;color:#655858}
+.manage{width:100%;margin-top:10px;background:#f0e5e7;color:#5d5050}
+.history,.editor{background:#fff;border:3px solid #eadede;border-radius:24px;padding:17px;margin-top:17px}
+.historyHeader{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.historyHeader h2,.editor h2{margin:0;color:#d95676;font-size:clamp(20px,3.2vw,27px)}
+.collapseHistory{border:0;border-radius:12px;padding:9px 13px;background:#ffe8ee;color:#c94f6c;font-weight:900;font-size:15px}
+.historyBody.collapsed{display:none}
+.record{border-top:1px solid #eee1e1;padding:11px 0}
+.record:first-child{border-top:0}
+.rmain{display:flex;justify-content:space-between;font-weight:900;gap:8px}
+.rsub{font-size:13px;color:#967f7f;margin-top:4px}
+.editRecord,.rdel{margin-top:7px;border:0;border-radius:9px;padding:7px 10px;font-weight:800}
+.editRecord{background:#f4ecec;color:#765b5b}
+.rdel{background:#ffe0e7;color:#b94f68;margin-left:6px}
+.editor{display:none}
+.editor.show{display:block}
+.row,.new{display:flex;gap:7px;margin-bottom:8px}
+.row input,.new input{flex:1;min-width:0;padding:10px;border:1px solid #dccaca;border-radius:10px;font-size:16px}
+.row button,.new button{border:0;border-radius:10px;padding:9px 12px;font-weight:800}
+.del{background:#ffe0e7;color:#b94f68}.add{background:#e1f2da;color:#4d7d47}
+@media(max-width:600px){
+  
+  .wrap{padding:18px 12px 34px}
+  .info{padding:17px 16px 18px;border-radius:25px}
+  .dateLine{gap:9px}
+  .dateLine input{width:250px;flex-basis:250px}
+  .today{padding:11px 15px;border-radius:16px}
+  .secondaryFields{gap:10px}
+  .field input{padding:12px 14px;border-radius:17px}
+  .stockGrid{gap:7px}
+  .stockCard{padding:9px 6px}
+  .stockControls{grid-template-columns:38px minmax(42px,1fr) 38px;gap:3px}
+  .stockBtn{width:38px;height:40px;font-size:23px}
+  .stockQty{width:52px;font-size:20px}
+  .grid{gap:9px}
+  .card{padding:12px 8px;border-radius:21px}
+  .controls{grid-template-columns:48px minmax(48px,1fr) 48px;gap:5px}
+  .btn{width:48px;height:48px;font-size:29px}
+  .qty{width:62px;min-width:50px;font-size:27px;border-radius:13px}
+}
+@media(max-width:420px){
+  .dateLine input{width:205px;flex-basis:205px}
+  .dateLine{gap:7px}
+  .today{padding:10px 12px;font-size:17px}
+  .secondaryFields{gap:8px}
+  .field{font-size:17px}
+  .field input{font-size:16px}
+  .controls{grid-template-columns:42px minmax(44px,1fr) 42px;gap:3px}
+  .btn{width:42px;height:46px;font-size:27px}
+  .qty{width:56px;font-size:25px}
+}
+</style></head><body><div class="wrap">
+<h1>🍦 冰淇淋口味統計</h1><div class="sub">可點選 ＋／−，也可以直接輸入數量</div>
+<div class="info">
+<div class="fields">
+<label class="field">📅 日期<div class="dateLine"><input id="date" type="date"><button type="button" class="today" id="today">今日</button></div></label>
+<div class="secondaryFields">
+<label class="field">🚗 車牌<input id="plate" placeholder="例如 BBB-1234"></label>
+<label class="field">📝 備註<input id="note" placeholder=""></label>
+</div>
+</div></div>
+
+<div class="summary"><b id="total">0</b><span>顆　目前總數</span></div>
+<div id="grid" class="grid"></div>
+<div class="actions" id="actions"><button class="save" id="save">💾 保存這筆紀錄</button><button class="clear" id="clear">↺ 清除目前數量</button></div>
+<button class="manage" id="manage">⚙️ 新增／修改／刪除口味</button>
+<div class="editor" id="editor"><h2>⚙️ 口味管理</h2><div id="rows"></div><div class="new"><input id="newFlavor" placeholder="輸入新口味"><button class="add" id="add">＋新增</button></div></div>
+<div class="history"><div class="historyHeader"><h2>📋 最近 20 筆紀錄</h2><button type="button" class="collapseHistory" id="collapseHistory">縮小 ▲</button></div><div class="historyBody" id="historyBody"><div id="history"></div></div></div>
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://ymwefwrqrojzpugirlxy.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_BoeGJy5saY_UDhURyHlEYg_OWKHIP3e";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+const initial=["淇淋巧酥","草莓","夏威夷果仁","香草","比利時巧克力","焦糖奶油脆餅","抹茶","草莓起司","仲夏野莓","藍莓"];
+let flavors=[];
+let qty={};
+let stock=JSON.parse(localStorage.getItem("ice_stock")||"{}");
+let records=JSON.parse(localStorage.getItem("ice_r")||"[]");
+let editingIndex=null;
+const $=id=>document.getElementById(id);
+function todayISO(){return new Date().toISOString().slice(0,10)}
+$("date").value=todayISO();
+$("today").onclick=()=>$("date").value=todayISO();
+
+function persistRecords(){localStorage.setItem("ice_r",JSON.stringify(records))}
+function setStatus(msg){
+  let el=document.getElementById("syncStatus");
+  if(!el){
+    el=document.createElement("div");
+    el.id="syncStatus";
+    el.style.cssText="text-align:center;color:#967f7f;font-size:12px;margin:8px 0";
+    $("history").parentNode.insertBefore(el,$("history"));
+  }
+  el.textContent=msg;
+}
+
+function persistStock(){localStorage.setItem("ice_stock",JSON.stringify(stock))}
+function stockValue(id){return Math.max(0,Math.floor(Number(stock[id]||0)))}
+function renderStock(){
+  const g=$("stockGrid"); if(!g)return;
+  g.innerHTML="";
+  flavors.forEach(f=>{
+    if(stock[f.id]===undefined) stock[f.id]=0;
+    const c=document.createElement("div"); c.className="stockCard";
+    const n=document.createElement("div"); n.className="stockName"; n.textContent=f.name;
+    const x=document.createElement("div"); x.className="stockControls";
+    const m=document.createElement("button"); m.type="button"; m.className="stockBtn stockMinus"; m.textContent="−";
+    const v=document.createElement("input"); v.type="number"; v.min="0"; v.inputMode="numeric"; v.className="stockQty"; v.value=stockValue(f.id);
+    const a=document.createElement("button"); a.type="button"; a.className="stockBtn stockPlus"; a.textContent="＋";
+    m.onclick=()=>changeStock(f.id,-1);
+    a.onclick=()=>changeStock(f.id,1);
+    v.onchange=()=>setStock(f.id,v.value);
+    v.onkeydown=e=>{if(e.key==="Enter")v.blur()};
+    x.append(m,v,a); c.append(n,x); g.append(c);
+  });
+  persistStock();
+}
+function setStock(id,value){
+  let next=Math.floor(Number(value));
+  if(!Number.isFinite(next)||next<0) next=0;
+  stock[id]=next; persistStock(); renderStock();
+}
+function changeStock(id,delta){
+  stock[id]=Math.max(0,stockValue(id)+delta);
+  persistStock(); renderStock();
+}
+function clearStock(){
+  if(!confirm("確定要清除所有口味的數量嗎？"))return;
+  flavors.forEach(f=>stock[f.id]=0);
+  persistStock(); renderStock();
+}
+function render(){
+  const g=$("grid"); g.innerHTML="";
+  flavors.forEach(f=>{
+    const c=document.createElement("div"); c.className="card";
+    const n=document.createElement("div"); n.className="name";
+    const nameText=document.createElement("span"); nameText.textContent=f.name;
+    const stockMini=document.createElement("span"); stockMini.className="stockMini";
+    const stockLabel=document.createElement("span"); stockLabel.textContent="";
+    const stockInput=document.createElement("input");
+    stockInput.type="number"; stockInput.min="0"; stockInput.step="1";
+    stockInput.inputMode="numeric"; stockInput.value=stockValue(f.id);
+    stockInput.setAttribute("aria-label",f.name+"數量");
+    stockInput.onchange=()=>setStock(f.id,stockInput.value);
+    stockInput.onkeydown=e=>{if(e.key==="Enter")stockInput.blur()};
+    stockMini.append(stockLabel,stockInput);
+    n.append(nameText,stockMini);
+    const x=document.createElement("div"); x.className="controls";
+    const m=document.createElement("button"); m.type="button"; m.className="btn minus"; m.textContent="−"; m.setAttribute("aria-label","減少"+f.name);
+    const v=document.createElement("input"); v.type="number"; v.className="qty"; v.min="0"; v.inputMode="numeric"; v.value=f.count||0; v.setAttribute("aria-label",f.name+"數量");
+     v.onchange=()=>setQty(f.id,v.value);
+     v.onkeydown=e=>{if(e.key==="Enter"){v.blur()}};
+    const a=document.createElement("button"); a.type="button"; a.className="btn plus"; a.textContent="＋"; a.setAttribute("aria-label","增加"+f.name);
+    m.onclick=()=>changeQty(f.id,-1);
+    a.onclick=()=>changeQty(f.id,1);
+    x.append(m,v,a); c.append(n,x); g.append(c);
+  });
+  $("total").textContent=flavors.reduce((s,f)=>s+(Number(f.count)||0),0);
+  renderRows(); renderHistory();
+}
+
+function renderRows(){
+  const r=$("rows"); r.innerHTML="";
+  flavors.forEach(f=>{
+    const row=document.createElement("div"); row.className="row";
+    const inp=document.createElement("input"); inp.value=f.name;
+    inp.onchange=()=>renameFlavor(f.id,inp.value.trim(),f.name);
+    const d=document.createElement("button"); d.className="del"; d.textContent="刪除";
+    d.onclick=()=>deleteFlavor(f.id,f.name);
+    row.append(inp,d); r.append(row);
+  });
+}
+
+function renderHistory(){
+  const h=$("history"); h.innerHTML="";
+  if(!records.length){h.innerHTML='<span class="rsub">尚無保存紀錄</span>';return}
+  records.slice(0,20).forEach((r,i)=>{
+    const d=document.createElement("div"); d.className="record";
+    const main=document.createElement("div"); main.className="rmain";
+    main.innerHTML="<span>📅 "+escapeHtml(r.date)+"　🚗 "+escapeHtml(r.plate||"未填車牌")+"</span><span>"+r.total+" 顆</span>";
+    const sub=document.createElement("div"); sub.className="rsub"; sub.textContent="📝 "+(r.note||"無備註");
+    const items=document.createElement("div"); items.className="rsub"; items.textContent=r.items||"";
+    const edit=document.createElement("button"); edit.className="editRecord"; edit.textContent="✏️ 編輯";
+    edit.onclick=()=>startEditRecord(i);
+    const del=document.createElement("button"); del.className="rdel"; del.textContent="刪除此筆";
+    del.onclick=()=>{if(editingIndex===i)cancelEdit();records.splice(i,1);persistRecords();renderHistory()};
+    d.append(main,sub,items,edit,del); h.append(d);
+  });
+}
+
+function recordDetails(r){
+  if(Array.isArray(r.details)) return r.details;
+  const result=[];
+  String(r.items||"").split("、").forEach(part=>{
+    const m=part.match(/^(.*)\s+(\d+)顆$/);
+    if(m) result.push({name:m[1],count:Number(m[2])});
+  });
+  return result;
+}
+
+function startEditRecord(index){
+  const r=records[index];
+  if(!r)return;
+  editingIndex=index;
+  $("date").value=r.date||todayISO();
+  $("plate").value=r.plate||"";
+  $("note").value=r.note||"";
+  qty={};
+  flavors.forEach(f=>qty[f.id]=0);
+  recordDetails(r).forEach(item=>{
+    const f=flavors.find(x=>x.name===item.name);
+    if(f) qty[f.id]=Number(item.count)||0;
+  });
+  // Editing uses the same live database counts as the current counter.
+  Promise.all(flavors.map(f=>db.from("ice_cream_flavors").update({count:Number(qty[f.id]||0)}).eq("id",f.id)))
+    .then(()=>loadFlavors());
+  $("save").textContent="💾 更新這筆紀錄";
+  if(!$("cancelEdit")){
+    const b=document.createElement("button"); b.id="cancelEdit"; b.type="button"; b.className="clear cancelEdit"; b.textContent="取消編輯"; b.onclick=cancelEdit; $("actions").appendChild(b);
+  }
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function cancelEdit(){
+  editingIndex=null;
+  $("save").textContent="💾 保存這筆紀錄";
+  const b=$("cancelEdit"); if(b)b.remove();
+  $("plate").value=""; $("note").value=""; $("date").value=todayISO();
+  clearAllCounts(false);
+}
+
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+
+async function loadFlavors(){
+  setStatus("☁️ 正在同步…");
+  const {data,error}=await db.from("ice_cream_flavors").select("id,name,count").order("id");
+  if(error){setStatus("⚠️ 同步失敗："+error.message);return}
+  flavors=data||[];
+  if(!flavors.length){
+    const seed=initial.map(name=>({name,count:0}));
+    const ins=await db.from("ice_cream_flavors").insert(seed).select("id,name,count");
+    if(ins.error){setStatus("⚠️ 建立口味失敗："+ins.error.message);return}
+    flavors=ins.data||[];
+  }
+  render();
+  setStatus("☁️ 已同步");
+}
+
+async function setQty(id,value){
+  const f=flavors.find(x=>String(x.id)===String(id));
+  if(!f)return;
+  let next=Math.floor(Number(value));
+  if(!Number.isFinite(next)||next<0) next=0;
+  const {data,error}=await db.from("ice_cream_flavors").update({count:next}).eq("id",id).select("id,name,count").single();
+  if(error){setStatus("⚠️ 更新失敗："+error.message);return}
+  Object.assign(f,data); render(); setStatus("☁️ 已同步");
+}
+async function changeQty(id,delta){
+  const f=flavors.find(x=>String(x.id)===String(id));
+  if(!f)return;
+  await setQty(id,Math.max(0,Number(f.count||0)+delta));
+}
+
+$("save").onclick=async()=>{
+  const total=flavors.reduce((s,f)=>s+(Number(f.count)||0),0);
+  if(total===0){alert("請先按口味旁的 ＋ 或直接輸入數量");return}
+  const details=flavors.filter(f=>(Number(f.count)||0)>0).map(f=>({name:f.name,count:Number(f.count)}));
+  const items=details.map(x=>x.name+" "+x.count+"顆").join("、");
+  const rec={date:$("date").value,plate:$("plate").value.trim(),note:$("note").value.trim(),total,items,details};
+  if(editingIndex!==null){records[editingIndex]=rec;alert("已更新這筆紀錄！");}
+  else {records.unshift(rec);records=records.slice(0,20);alert("已保存這筆紀錄！");}
+  persistRecords();
+  editingIndex=null;
+  $("save").textContent="💾 保存這筆紀錄";
+  const cb=$("cancelEdit"); if(cb)cb.remove();
+  $("plate").value=""; $("note").value=""; $("date").value=todayISO();
+  await clearAllCounts(false);
+  renderHistory();
+};
+
+async function clearAllCounts(showMessage=true){
+  const {error}=await db.from("ice_cream_flavors").update({count:0}).not("id","is",null);
+  if(error){setStatus("⚠️ 清除失敗："+error.message);return}
+  await loadFlavors();
+  if(showMessage) setStatus("☁️ 已清除並同步");
+}
+$("clear").onclick=()=>clearAllCounts(true);
+
+$("manage").onclick=()=>$("editor").classList.toggle("show");
+
+$("add").onclick=async()=>{
+  const i=$("newFlavor"),n=i.value.trim();
+  if(!n)return;
+  if(flavors.some(f=>f.name===n)){alert("已有這個口味");return}
+  const {error}=await db.from("ice_cream_flavors").insert({name:n,count:0});
+  if(error){alert("新增失敗："+error.message);return}
+  i.value=""; await loadFlavors();
+};
+
+async function renameFlavor(id,name,oldName){
+  if(!name||flavors.some(f=>f.name===name&&String(f.id)!==String(id))){alert("口味名稱不可空白或重複");renderRows();return}
+  const {error}=await db.from("ice_cream_flavors").update({name}).eq("id",id);
+  if(error){alert("修改失敗："+error.message);renderRows();return}
+  await loadFlavors();
+}
+
+async function deleteFlavor(id,name){
+  if(flavors.length===1)return;
+  if(!confirm("確定刪除「"+name+"」？"))return;
+  const {error}=await db.from("ice_cream_flavors").delete().eq("id",id);
+  if(error){alert("刪除失敗："+error.message);return}
+  delete stock[id]; persistStock();
+  await loadFlavors();
+}
+
+$("collapseHistory").onclick=()=>{
+  const body=$("historyBody"),btn=$("collapseHistory");
+  body.classList.toggle("collapsed");
+  btn.textContent=body.classList.contains("collapsed")?"展開 ▼":"縮小 ▲";
+};
+
+db.channel("icecream-live")
+  .on("postgres_changes",{event:"*",schema:"public",table:"ice_cream_flavors"},()=>loadFlavors())
+  .subscribe((status)=>{if(status==="SUBSCRIBED")setStatus("☁️ 即時同步已連線")});
+
+loadFlavors();
+renderHistory();
+</script></body></html>
